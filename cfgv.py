@@ -165,6 +165,15 @@ Conditional.__new__.__defaults__ = (False,)
 Conditional.check = _check_conditional
 Conditional.apply_default = _dct_noop
 Conditional.remove_default = _dct_noop
+ConditionalRecurse = collections.namedtuple(
+    'ConditionalRecurse',
+    ('key', 'schema', 'condition_key', 'condition_value', 'ensure_absent'),
+)
+ConditionalRecurse.__new__.__defaults__ = (False,)
+ConditionalRecurse.check = _check_conditional
+ConditionalRecurse.check_fn = _check_fn_recurse
+ConditionalRecurse.apply_default = _dct_noop
+ConditionalRecurse.remove_default = _dct_noop
 
 
 class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):

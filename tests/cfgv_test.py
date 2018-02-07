@@ -15,6 +15,7 @@ from cfgv import check_bool
 from cfgv import check_regex
 from cfgv import check_type
 from cfgv import Conditional
+from cfgv import ConditionalRecurse
 from cfgv import load_from_filename
 from cfgv import Map
 from cfgv import MISSING
@@ -439,6 +440,41 @@ def test_optional_optional_remove_defaults():
     val = {'builder': {'noop': True}}
     ret = remove_defaults(val, optional_nested_optional_schema)
     assert ret == {}
+
+
+params1_schema = Map('Params1', None, Required('p1', check_bool))
+params2_schema = Map('Params2', None, Required('p2', check_bool))
+conditional_nested_schema = Map(
+    'Config', None,
+    Required('type', check_any),
+    ConditionalRecurse('params', params1_schema, 'type', 'type1'),
+    ConditionalRecurse('params', params2_schema, 'type', 'type2'),
+)
+
+
+@pytest.mark.parametrize(
+    'val',
+    (
+        {'type': 'type3'},  # matches no condition
+        {'type': 'type1', 'params': {'p1': True}},
+        {'type': 'type2', 'params': {'p2': True}},
+    ),
+)
+def test_conditional_recurse_ok(val):
+    validate(val, conditional_nested_schema)
+
+
+def test_conditional_recurse_error():
+    with pytest.raises(ValidationError) as excinfo:
+        val = {'type': 'type1', 'params': {'p2': True}}
+        validate(val, conditional_nested_schema)
+    expected = (
+        'At Config()',
+        'At key: params',
+        'At Params1()',
+        'Missing required key: p1',
+    )
+    _assert_exception_trace(excinfo.value, expected)
 
 
 class Error(Exception):
