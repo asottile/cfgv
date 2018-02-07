@@ -13,7 +13,7 @@ Validate configuration and produce human readable error messages.
 ## Sample error messages
 
 These are easier to see by example.  Here's an example where I typo'd `true`
-in a [pre-commit](https://pre-commit.com] configuration.
+in a [pre-commit](https://pre-commit.com) configuration.
 
 ```
 pre_commit.clientlib.InvalidConfigError:
