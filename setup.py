@@ -6,7 +6,7 @@ setup(
         'Validate configuration and produce human readable error messages.'
     ),
     url='https://github.com/asottile/cfgv',
-    version='0.0.1',
+    version='0.0.2',
     author='Anthony Sottile',
     author_email='asottile@umich.edu',
     classifiers=[
