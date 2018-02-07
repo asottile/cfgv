@@ -80,7 +80,7 @@ def _check_required(self, dct):
 
 
 @property
-def _check_fn_required_recurse(self):
+def _check_fn_recurse(self):
     def check_fn(val):
         validate(val, self.schema)
     return check_fn
@@ -92,6 +92,18 @@ def _apply_default_required_recurse(self, dct):
 
 def _remove_default_required_recurse(self, dct):
     dct[self.key] = remove_defaults(dct[self.key], self.schema)
+
+
+def _apply_default_optional_recurse(self, dct):
+    if self.key not in dct:
+        _apply_default_optional(self, dct)
+    _apply_default_required_recurse(self, dct)
+
+
+def _remove_default_optional_recurse(self, dct):
+    if self.key in dct:
+        _remove_default_required_recurse(self, dct)
+        _remove_default_optional(self, dct)
 
 
 def _check_conditional(self, dct):
@@ -125,13 +137,20 @@ Required.apply_default = _dct_noop
 Required.remove_default = _dct_noop
 RequiredRecurse = collections.namedtuple('RequiredRecurse', ('key', 'schema'))
 RequiredRecurse.check = _check_required
-RequiredRecurse.check_fn = _check_fn_required_recurse
+RequiredRecurse.check_fn = _check_fn_recurse
 RequiredRecurse.apply_default = _apply_default_required_recurse
 RequiredRecurse.remove_default = _remove_default_required_recurse
 Optional = collections.namedtuple('Optional', ('key', 'check_fn', 'default'))
 Optional.check = _check_optional
 Optional.apply_default = _apply_default_optional
 Optional.remove_default = _remove_default_optional
+OptionalRecurse = collections.namedtuple(
+    'OptionalRecurse', ('key', 'schema', 'default'),
+)
+OptionalRecurse.check = _check_optional
+OptionalRecurse.check_fn = _check_fn_recurse
+OptionalRecurse.apply_default = _apply_default_optional_recurse
+OptionalRecurse.remove_default = _remove_default_optional_recurse
 OptionalNoDefault = collections.namedtuple(
     'OptionalNoDefault', ('key', 'check_fn'),
 )

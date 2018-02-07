@@ -22,6 +22,7 @@ from cfgv import Not
 from cfgv import NotIn
 from cfgv import Optional
 from cfgv import OptionalNoDefault
+from cfgv import OptionalRecurse
 from cfgv import remove_defaults
 from cfgv import Required
 from cfgv import RequiredRecurse
@@ -374,6 +375,70 @@ def test_remove_defaults_nested():
     val = {'repo': 'repo1', 'hooks': [{'key': False}]}
     ret = remove_defaults(val, nested_schema_optional)
     assert ret == {'repo': 'repo1', 'hooks': [{}]}
+
+
+link = Map('Link', 'key', Required('key', check_bool))
+optional_nested_schema = Map(
+    'Config', None,
+    OptionalRecurse('links', Array(link), []),
+)
+
+
+def test_validate_failure_optional_recurse():
+    with pytest.raises(ValidationError) as excinfo:
+        validate({'links': [{}]}, optional_nested_schema)
+    expected = (
+        'At Config()',
+        'At key: links',
+        'At Link(key=MISSING)',
+        'Missing required key: key',
+    )
+    _assert_exception_trace(excinfo.value, expected)
+
+
+def test_optional_recurse_ok_missing():
+    validate({}, optional_nested_schema)
+
+
+def test_apply_defaults_optional_recurse_missing():
+    ret = apply_defaults({}, optional_nested_schema)
+    assert ret == {'links': []}
+
+
+def test_apply_defaults_optional_recurse_already_present():
+    ret = apply_defaults({'links': [{'key': True}]}, optional_nested_schema)
+    assert ret == {'links': [{'key': True}]}
+
+
+def test_remove_defaults_optional_recurse_not_present():
+    assert remove_defaults({}, optional_nested_schema) == {}
+
+
+def test_remove_defaults_optional_recurse_present_at_default():
+    assert remove_defaults({'links': []}, optional_nested_schema) == {}
+
+
+def test_remove_defaults_optional_recurse_non_default():
+    ret = remove_defaults({'links': [{'key': True}]}, optional_nested_schema)
+    assert ret == {'links': [{'key': True}]}
+
+
+builder_opts = Map('BuilderOpts', None, Optional('noop', check_bool, True))
+optional_nested_optional_schema = Map(
+    'Config', None,
+    OptionalRecurse('builder', builder_opts, {}),
+)
+
+
+def test_optional_optional_apply_defaults():
+    ret = apply_defaults({}, optional_nested_optional_schema)
+    assert ret == {'builder': {'noop': True}}
+
+
+def test_optional_optional_remove_defaults():
+    val = {'builder': {'noop': True}}
+    ret = remove_defaults(val, optional_nested_optional_schema)
+    assert ret == {}
 
 
 class Error(Exception):
