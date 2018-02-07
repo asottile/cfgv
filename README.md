@@ -10,6 +10,23 @@ Validate configuration and produce human readable error messages.
 
 `pip install cfgv`
 
+## Sample error messages
+
+These are easier to see by example.  Here's an example where I typo'd `true`
+in a [https://pre-commit.com](pre-commit) configuration.
+
+```
+pre_commit.clientlib.InvalidConfigError:
+==> File /home/asottile/workspace/pre-commit/.pre-commit-config.yaml
+==> At Config()
+==> At key: repos
+==> At Repository(repo='https://github.com/pre-commit/pre-commit-hooks')
+==> At key: hooks
+==> At Hook(id='flake8')
+==> At key: always_run
+=====> Expected bool got str
+```
+
 ## API
 
 ### `cfgv.validate(value, schema)`
@@ -44,3 +61,161 @@ load_my_cfg = functools.partial(
 ```
 
 ## Making a schema
+
+There are currently two types of schemas, `Map`s and `Array`s.
+
+### `Map(object_name, id_key, *items)`
+
+The most basic building block for creating a schema is a `Map`
+
+- `object_name`: will be displayed in error messages
+- `id_key`: will be used to identify the object in error messages.  Set to
+  `None` if there is no identifying key for the object.
+- `items`: validator objects such as `Required` or `Optional`
+
+Consider the following schema:
+
+```python
+Map(
+    'Repo', 'url',
+    Required('url', check_any),
+)
+```
+
+In an error message, the map may be displayed as:
+
+- `Repo(url='https://github.com/pre-commit/pre-commit')`
+- `Repo(url=MISSING)` (if the key is not present)
+
+### `Array(of)`
+
+Used to nest maps inside of arrays.  For arrays of scalars, see `check_array`.
+
+- `of`: A `Map` / `Array` or other sub-schema.
+
+When validated, this will check that each element adheres to the sub-schema.
+
+## Validator objects
+
+Validator objects are used to validate key-value-pairs of a `Map`.
+
+### `Required(key, check_fn)`
+
+Ensure that a key is present in a `Map` and adheres to the
+[check function](#check-functions).
+
+### `RequiredRecurse(key, schema)`
+
+Similar to `Required`, but uses a [schema](#making-a-schema).
+
+### `Optional(key, check_fn, default)`
+
+If a key is present, check that it adheres to the
+[check function](#check-functions).
+
+`apply_defaults` will set the `default` if it is not present.
+`remove_defaults` will remove the value if it is equal to `default`.
+
+### `OptionalRecurse(key, schema, default)`
+
+Similar to `Optional` but uses a [schema](#making-a-schema).
+
+`apply_defaults` will set the `default` if it is not present and then validate
+it with the schema.
+`remove_defaults` will remove defaults using the schema, and then remove the
+value it if it is equal to `default`.
+
+### `OptionalNoDefault(key, check_fn)`
+
+Like `Optional`, but does not `apply_defaults` or `remove_defaults`.
+
+### `Conditional(key, check_fn, condition_key, condition_value, ensure_absent=False)`
+
+- If `condition_key` is equal to the `condition_value`, the specific `key`
+will be checked using the [check function](#check-functions).
+- If `ensure_absent` is `True` and the condition check fails, the `key` will
+be checked for absense.
+
+Note that the `condition_value` is checked for equality, so any object
+implementing `__eq__` may be used.  A few are provided out of the box
+for this purpose, see [equality helpers](#equality-helpers).
+
+### `ConditionalRecurse(key, schema, condition_key, condition_value, ensure_absent=True)`
+
+Similar to `Conditional`, but uses a [schema](#making-a-schema).
+
+## Equality helpers
+
+Equality helpers at the very least implement `__eq__` for their behaviour.
+They may also implement `def describe_opposite(self):` for use in the
+`ensure_absent=True` case error message (otherwise, the `__repr__` will be
+used).
+
+### `Not(val)`
+
+Returns `True` if the value is not equal to `val`.
+
+### `In(*values)`
+
+Returns `True` if the value is contained in `values`.
+
+### `NotIn(*values)`
+
+Returns `True` if the value is not contained in `values`.
+
+## Check functions
+
+A number of check functions are provided out of the box.
+
+A check function takes a single parameter, the `value`, and either raises a
+`ValidationError` or returns nothing.
+
+### `check_any(_)`
+
+A noop check function.
+
+### `check_type(tp, typename=None)`
+
+Returns a check function to check for a specific type.  Setting `typename`
+will replace the type's name in the error message.
+
+For example:
+
+```python
+Required('key', check_type(int))
+# 'Expected bytes' in both python2 and python3.
+Required('key', check_type(bytes, typename='bytes'))
+```
+
+Several type checking functions are provided out of the box:
+
+- `check_bool`
+- `check_bytes`
+- `check_int`
+- `check_string`
+- `check_text`
+
+### `check_regex(v)`
+
+Ensures that `v` is a valid python regular expression.
+
+### `check_array(inner_check)`
+
+Returns a function that checks that a value is a sequence and that each
+value in that sequence adheres to the `inner_check`.
+
+For example:
+
+```python
+Required('args', check_array(check_string))
+```
+
+### `check_and(*fns)`
+
+Returns a function that performs multiple checks on a value.
+
+For example:
+
+```python
+Required('language', check_and(check_string, my_check_language))
+```

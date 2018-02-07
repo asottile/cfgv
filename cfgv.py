@@ -275,7 +275,10 @@ def check_type(tp, typename=None):
 
 
 check_bool = check_type(bool)
+check_bytes = check_type(bytes, typename='bytes')
+check_int = check_type(int)
 check_string = check_type(six.string_types, typename='string')
+check_text = check_type(six.text_type, typename='text')
 
 
 def check_regex(v):
