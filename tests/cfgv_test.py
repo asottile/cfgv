@@ -132,6 +132,7 @@ def test_in(values, expected):
 
 
 trivial_array_schema = Array(Map('foo', 'id'))
+trivial_array_schema_nonempty = Array(Map('foo', 'id'), allow_empty=False)
 
 
 def test_validate_top_level_array_not_an_array():
@@ -142,7 +143,7 @@ def test_validate_top_level_array_not_an_array():
 
 def test_validate_top_level_array_no_objects():
     with pytest.raises(ValidationError) as excinfo:
-        validate([], trivial_array_schema)
+        validate([], trivial_array_schema_nonempty)
     assert excinfo.value.error_msg == "Expected at least 1 'foo'"
 
 

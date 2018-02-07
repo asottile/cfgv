@@ -204,8 +204,11 @@ class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):
         return ret
 
 
-class Array(collections.namedtuple('Array', ('of',))):
+class Array(collections.namedtuple('Array', ('of', 'allow_empty'))):
     __slots__ = ()
+
+    def __new__(cls, of, allow_empty=True):
+        return super(Array, cls).__new__(cls, of=of, allow_empty=allow_empty)
 
     def check(self, v):
         check_array(check_any)(v)
