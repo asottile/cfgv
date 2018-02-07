@@ -16,6 +16,7 @@ from cfgv import check_regex
 from cfgv import check_type
 from cfgv import Conditional
 from cfgv import ConditionalRecurse
+from cfgv import In
 from cfgv import load_from_filename
 from cfgv import Map
 from cfgv import MISSING
@@ -116,6 +117,16 @@ def test_not(val, expected):
 )
 def test_not_in(values, expected):
     compared = NotIn('baz', 'foo')
+    assert (values == compared) is expected
+    assert (compared == values) is expected
+
+
+@pytest.mark.parametrize(
+    ('values', 'expected'),
+    (('bar', False), ('foo', True), ('baz', True), (MISSING, False)),
+)
+def test_in(values, expected):
+    compared = In('baz', 'foo')
     assert (values == compared) is expected
     assert (compared == values) is expected
 
@@ -221,6 +232,13 @@ map_conditional_absent_not_in = Map(
         condition_key='key', condition_value=NotIn(1, 2), ensure_absent=True,
     ),
 )
+map_conditional_absent_in = Map(
+    'foo', 'key',
+    Conditional(
+        'key2', check_bool,
+        condition_key='key', condition_value=In(1, 2), ensure_absent=True,
+    ),
+)
 
 
 @pytest.mark.parametrize('schema', (map_conditional, map_conditional_not))
@@ -273,6 +291,17 @@ def test_ensure_absent_conditional_not_in():
     expected = (
         'At foo(key=1)',
         'Expected key2 to be absent when key is any of (1, 2), '
+        'found key2: True',
+    )
+    _assert_exception_trace(excinfo.value, expected)
+
+
+def test_ensure_absent_conditional_in():
+    with pytest.raises(ValidationError) as excinfo:
+        validate({'key': 3, 'key2': True}, map_conditional_absent_in)
+    expected = (
+        'At foo(key=3)',
+        'Expected key2 to be absent when key is not any of (1, 2), '
         'found key2: True',
     )
     _assert_exception_trace(excinfo.value, expected)

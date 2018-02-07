@@ -110,23 +110,17 @@ def _check_conditional(self, dct):
     if dct.get(self.condition_key, MISSING) == self.condition_value:
         _check_required(self, dct)
     elif self.condition_key in dct and self.ensure_absent and self.key in dct:
-        if isinstance(self.condition_value, Not):
-            op = 'is'
-            cond_val = self.condition_value.val
-        elif isinstance(self.condition_value, NotIn):
-            op = 'is any of'
-            cond_val = self.condition_value.values
+        if hasattr(self.condition_value, 'describe_opposite'):
+            explanation = self.condition_value.describe_opposite()
         else:
-            op = 'is not'
-            cond_val = self.condition_value
+            explanation = 'is not {!r}'.format(self.condition_value)
         raise ValidationError(
-            'Expected {key} to be absent when {cond_key} {op} {cond_val!r}, '
+            'Expected {key} to be absent when {cond_key} {explanation}, '
             'found {key}: {val!r}'.format(
                 key=self.key,
                 val=dct[self.key],
                 cond_key=self.condition_key,
-                op=op,
-                cond_val=cond_val,
+                explanation=explanation,
             ),
         )
 
@@ -230,16 +224,39 @@ class Array(collections.namedtuple('Array', ('of',))):
 
 
 class Not(collections.namedtuple('Not', ('val',))):
+    __slots__ = ()
+
+    def describe_opposite(self):
+        return 'is {!r}'.format(self.val)
+
     def __eq__(self, other):
         return other is not MISSING and other != self.val
 
 
 class NotIn(collections.namedtuple('NotIn', ('values',))):
+    __slots__ = ()
+
     def __new__(cls, *values):
         return super(NotIn, cls).__new__(cls, values=values)
 
+    def describe_opposite(self):
+        return 'is any of {!r}'.format(self.values)
+
     def __eq__(self, other):
         return other is not MISSING and other not in self.values
+
+
+class In(collections.namedtuple('In', ('values',))):
+    __slots__ = ()
+
+    def __new__(cls, *values):
+        return super(In, cls).__new__(cls, values=values)
+
+    def describe_opposite(self):
+        return 'is not any of {!r}'.format(self.values)
+
+    def __eq__(self, other):
+        return other is not MISSING and other in self.values
 
 
 def check_any(_):
