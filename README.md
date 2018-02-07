@@ -13,7 +13,7 @@ Validate configuration and produce human readable error messages.
 ## Sample error messages
 
 These are easier to see by example.  Here's an example where I typo'd `true`
-in a [https://pre-commit.com](pre-commit) configuration.
+in a [pre-commit](https://pre-commit.com] configuration.
 
 ```
 pre_commit.clientlib.InvalidConfigError:
@@ -113,17 +113,17 @@ Similar to `Required`, but uses a [schema](#making-a-schema).
 If a key is present, check that it adheres to the
 [check function](#check-functions).
 
-`apply_defaults` will set the `default` if it is not present.
-`remove_defaults` will remove the value if it is equal to `default`.
+- `apply_defaults` will set the `default` if it is not present.
+- `remove_defaults` will remove the value if it is equal to `default`.
 
 ### `OptionalRecurse(key, schema, default)`
 
 Similar to `Optional` but uses a [schema](#making-a-schema).
 
-`apply_defaults` will set the `default` if it is not present and then validate
-it with the schema.
-`remove_defaults` will remove defaults using the schema, and then remove the
-value it if it is equal to `default`.
+- `apply_defaults` will set the `default` if it is not present and then
+  validate it with the schema.
+- `remove_defaults` will remove defaults using the schema, and then remove the
+  value it if it is equal to `default`.
 
 ### `OptionalNoDefault(key, check_fn)`
 
@@ -147,9 +147,9 @@ Similar to `Conditional`, but uses a [schema](#making-a-schema).
 ## Equality helpers
 
 Equality helpers at the very least implement `__eq__` for their behaviour.
+
 They may also implement `def describe_opposite(self):` for use in the
-`ensure_absent=True` case error message (otherwise, the `__repr__` will be
-used).
+`ensure_absent=True` error message (otherwise, the `__repr__` will be used).
 
 ### `Not(val)`
 
