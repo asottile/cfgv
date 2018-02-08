@@ -284,6 +284,15 @@ check_string = check_type(six.string_types, typename='string')
 check_text = check_type(six.text_type, typename='text')
 
 
+def check_one_of(possible):
+    def check_one_of_fn(v):
+        if v not in possible:
+            raise ValidationError('Expected one of {} but got: {!r}'.format(
+                ', '.join(str(x) for x in sorted(possible)), v,
+            ))
+    return check_one_of_fn
+
+
 def check_regex(v):
     try:
         re.compile(v)
