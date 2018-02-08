@@ -12,6 +12,7 @@ from cfgv import check_and
 from cfgv import check_any
 from cfgv import check_array
 from cfgv import check_bool
+from cfgv import check_one_of
 from cfgv import check_regex
 from cfgv import check_type
 from cfgv import Conditional
@@ -61,6 +62,16 @@ def test_ValidationError_nested():
         '==> At line 1\n'
         '=====> error msg'
     )
+
+
+def test_check_one_of():
+    with pytest.raises(ValidationError) as excinfo:
+        check_one_of((1, 2))(3)
+    assert excinfo.value.error_msg == 'Expected one of 1, 2 but got: 3'
+
+
+def test_check_one_of_ok():
+    check_one_of((1, 2))(2)
 
 
 def test_check_regex():

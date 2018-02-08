@@ -196,6 +196,16 @@ Several type checking functions are provided out of the box:
 - `check_string`
 - `check_text`
 
+### `check_one_of(possible)`
+
+Returns a function that checks that the value is contained in `possible`.
+
+For example:
+
+```python
+Required('language', check_one_of(('javascript', 'python', 'ruby')))
+```
+
 ### `check_regex(v)`
 
 Ensures that `v` is a valid python regular expression.
