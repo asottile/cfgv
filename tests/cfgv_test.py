@@ -147,6 +147,10 @@ def test_validate_top_level_array_no_objects():
     assert excinfo.value.error_msg == "Expected at least 1 'foo'"
 
 
+def test_trivial_array_schema_ok_empty():
+    validate([], trivial_array_schema)
+
+
 @pytest.mark.parametrize('v', (({},), [{}]))
 def test_ok_both_types(v):
     validate(v, trivial_array_schema)

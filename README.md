@@ -87,11 +87,12 @@ In an error message, the map may be displayed as:
 - `Repo(url='https://github.com/pre-commit/pre-commit')`
 - `Repo(url=MISSING)` (if the key is not present)
 
-### `Array(of)`
+### `Array(of, allow_empty=True)`
 
 Used to nest maps inside of arrays.  For arrays of scalars, see `check_array`.
 
 - `of`: A `Map` / `Array` or other sub-schema.
+- `allow_empty`: when `False`, `Array` will ensure at least one element.
 
 When validated, this will check that each element adheres to the sub-schema.
 

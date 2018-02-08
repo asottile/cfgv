@@ -212,7 +212,7 @@ class Array(collections.namedtuple('Array', ('of', 'allow_empty'))):
 
     def check(self, v):
         check_array(check_any)(v)
-        if not v:
+        if not self.allow_empty and not v:
             raise ValidationError(
                 "Expected at least 1 '{}'".format(self.of.object_name),
             )
