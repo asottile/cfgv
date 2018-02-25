@@ -62,7 +62,25 @@ load_my_cfg = functools.partial(
 
 ## Making a schema
 
-There are currently two types of schemas, `Map`s and `Array`s.
+A schema validates a container -- `cfgv` provides `Map` and `Array` for
+most normal cases.
+
+### writing your own schema container
+
+If the built-in containers below don't quite satisfy your usecase, you can
+always write your own.  Containers use the following interface:
+
+```python
+class Container(object):
+    def check(self, v):
+        """check the passed in value (do not modify `v`)"""
+
+    def apply_defaults(self, v):
+        """return a new value with defaults applied (do not modify `v`)"""
+
+    def remove_defaults(self, v):
+        """return a new value with defaults removed (do not modify `v`)"""
+```
 
 ### `Map(object_name, id_key, *items)`
 
@@ -99,6 +117,30 @@ When validated, this will check that each element adheres to the sub-schema.
 ## Validator objects
 
 Validator objects are used to validate key-value-pairs of a `Map`.
+
+### writing your own validator
+
+If the built-in validators below don't quite satisfy your usecase, you can
+always write your own.  Validators use the following interface:
+
+```python
+class Validator(object):
+    def check(self, dct):
+        """check that your specific key has the appropriate value in `dct`"""
+
+    def apply_default(self, dct):
+        """modify `dct` and set the default value if it is missing"""
+
+    def remove_default(self, dct):
+        """modify `dct` and remove the default value if it is present"""
+```
+
+It may make sense to _borrow_ functions from the built in validators.  They
+additionally use the following interface(s):
+
+- `self.key`: the key to check
+- `self.check_fn`: the [check function](#check-functions)
+- `self.default`: a default value to set.
 
 ### `Required(key, check_fn)`
 
