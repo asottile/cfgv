@@ -44,7 +44,7 @@ Returns a new value which sets all missing optional values to their defaults.
 Returns a new value which removes all optional values that are set to their
 defaults.
 
-### `cfgv.load_from_filename(filename, schema, load_strategy, exc_tp)`
+### `cfgv.load_from_filename(filename, schema, load_strategy, exc_tp=ValidationError)`
 
 Load a file given the `load_strategy`.  Reraise any errors as `exc_tp`.  All
 defaults will be populated in the resulting value.

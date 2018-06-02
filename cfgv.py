@@ -333,7 +333,12 @@ def remove_defaults(v, schema):
     return schema.remove_defaults(v)
 
 
-def load_from_filename(filename, schema, load_strategy, exc_tp):
+def load_from_filename(
+        filename,
+        schema,
+        load_strategy,
+        exc_tp=ValidationError,
+):
     with reraise_as(exc_tp):
         if not os.path.exists(filename):
             raise ValidationError('{} does not exist'.format(filename))
