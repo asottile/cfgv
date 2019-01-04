@@ -125,6 +125,16 @@ def _check_conditional(self, dct):
         )
 
 
+def _apply_default_conditional_recurse(self, dct):
+    if dct.get(self.condition_key, MISSING) == self.condition_value:
+        _apply_default_required_recurse(self, dct)
+
+
+def _remove_default_conditional_recurse(self, dct):
+    if dct.get(self.condition_key, MISSING) == self.condition_value:
+        _remove_default_required_recurse(self, dct)
+
+
 Required = collections.namedtuple('Required', ('key', 'check_fn'))
 Required.check = _check_required
 Required.apply_default = _dct_noop
@@ -166,8 +176,8 @@ ConditionalRecurse = collections.namedtuple(
 ConditionalRecurse.__new__.__defaults__ = (False,)
 ConditionalRecurse.check = _check_conditional
 ConditionalRecurse.check_fn = _check_fn_recurse
-ConditionalRecurse.apply_default = _dct_noop
-ConditionalRecurse.remove_default = _dct_noop
+ConditionalRecurse.apply_default = _apply_default_conditional_recurse
+ConditionalRecurse.remove_default = _remove_default_conditional_recurse
 
 
 class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):
