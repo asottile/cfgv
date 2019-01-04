@@ -560,3 +560,34 @@ def test_load_from_filename_applies_defaults(tmpdir):
     f.write('{}')
     ret = load_from_filename(f.strpath, map_optional, json.loads, Error)
     assert ret == {'key': False}
+
+
+condition_recurse = Map(
+    'Map', None,
+
+    Required('type', check_bool),
+    ConditionalRecurse(
+        'v', Map('Inner', 'k', Optional('k', check_bool, True)),
+        't', True,
+    ),
+    ConditionalRecurse(
+        'v', Map('Inner', 'k', Optional('k', check_bool, False)),
+        't', False,
+    ),
+)
+
+
+def test_conditional_recurse_apply_defaults():
+    ret = apply_defaults({'t': True, 'v': {}}, condition_recurse)
+    assert ret == {'t': True, 'v': {'k': True}}
+    ret = apply_defaults({'t': False, 'v': {}}, condition_recurse)
+    assert ret == {'t': False, 'v': {'k': False}}
+
+
+def test_conditional_recurse_remove_defaults():
+    ret = remove_defaults({'t': True, 'v': {'k': True}}, condition_recurse)
+    assert ret == {'t': True, 'v': {}}
+    ret = remove_defaults({'t': False, 'v': {'k': False}}, condition_recurse)
+    assert ret == {'t': False, 'v': {}}
+    ret = remove_defaults({'t': True, 'v': {'k': False}}, condition_recurse)
+    assert ret == {'t': True, 'v': {'k': False}}
