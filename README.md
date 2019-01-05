@@ -183,6 +183,10 @@ Note that the `condition_value` is checked for equality, so any object
 implementing `__eq__` may be used.  A few are provided out of the box
 for this purpose, see [equality helpers](#equality-helpers).
 
+### `ConditionalOptional(key, check_fn, default, condition_key, condition_value, ensure_absent=False)`
+
+Similar to ``Conditional`` and ``Optional``.
+
 ### `ConditionalRecurse(key, schema, condition_key, condition_value, ensure_absent=True)`
 
 Similar to `Conditional`, but uses a [schema](#making-a-schema).

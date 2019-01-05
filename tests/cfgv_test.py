@@ -16,6 +16,7 @@ from cfgv import check_one_of
 from cfgv import check_regex
 from cfgv import check_type
 from cfgv import Conditional
+from cfgv import ConditionalOptional
 from cfgv import ConditionalRecurse
 from cfgv import In
 from cfgv import load_from_filename
@@ -562,10 +563,10 @@ def test_load_from_filename_applies_defaults(tmpdir):
     assert ret == {'key': False}
 
 
-condition_recurse = Map(
+conditional_recurse = Map(
     'Map', None,
 
-    Required('type', check_bool),
+    Required('t', check_bool),
     ConditionalRecurse(
         'v', Map('Inner', 'k', Optional('k', check_bool, True)),
         't', True,
@@ -577,17 +578,60 @@ condition_recurse = Map(
 )
 
 
-def test_conditional_recurse_apply_defaults():
-    ret = apply_defaults({'t': True, 'v': {}}, condition_recurse)
-    assert ret == {'t': True, 'v': {'k': True}}
-    ret = apply_defaults({'t': False, 'v': {}}, condition_recurse)
-    assert ret == {'t': False, 'v': {'k': False}}
+@pytest.mark.parametrize('tvalue', (True, False))
+def test_conditional_recurse_apply_defaults(tvalue):
+    val = {'t': tvalue, 'v': {}}
+    ret = apply_defaults(val, conditional_recurse)
+    assert ret == {'t': tvalue, 'v': {'k': tvalue}}
+
+    val = {'t': tvalue, 'v': {'k': not tvalue}}
+    ret = apply_defaults(val, conditional_recurse)
+    assert ret == {'t': tvalue, 'v': {'k': not tvalue}}
 
 
-def test_conditional_recurse_remove_defaults():
-    ret = remove_defaults({'t': True, 'v': {'k': True}}, condition_recurse)
-    assert ret == {'t': True, 'v': {}}
-    ret = remove_defaults({'t': False, 'v': {'k': False}}, condition_recurse)
-    assert ret == {'t': False, 'v': {}}
-    ret = remove_defaults({'t': True, 'v': {'k': False}}, condition_recurse)
-    assert ret == {'t': True, 'v': {'k': False}}
+@pytest.mark.parametrize('tvalue', (True, False))
+def test_conditional_recurse_remove_defaults(tvalue):
+    val = {'t': tvalue, 'v': {'k': tvalue}}
+    ret = remove_defaults(val, conditional_recurse)
+    assert ret == {'t': tvalue, 'v': {}}
+
+    val = {'t': tvalue, 'v': {'k': not tvalue}}
+    ret = remove_defaults(val, conditional_recurse)
+    assert ret == {'t': tvalue, 'v': {'k': not tvalue}}
+
+
+conditional_optional = Map(
+    'Map', None,
+
+    Required('t', check_bool),
+    ConditionalOptional('v', check_bool, True, 't', True),
+    ConditionalOptional('v', check_bool, False, 't', False),
+)
+
+
+@pytest.mark.parametrize('tvalue', (True, False))
+def test_conditional_optional_check(tvalue):
+    with pytest.raises(ValidationError) as excinfo:
+        validate({'t': tvalue, 'v': 2}, conditional_optional)
+    expected = (
+        'At Map()',
+        'At key: v',
+        'Expected bool got int',
+    )
+    _assert_exception_trace(excinfo.value, expected)
+
+    validate({'t': tvalue, 'v': tvalue}, conditional_optional)
+
+
+@pytest.mark.parametrize('tvalue', (True, False))
+def test_conditional_optional_apply_default(tvalue):
+    ret = apply_defaults({'t': tvalue}, conditional_optional)
+    assert ret == {'t': tvalue, 'v': tvalue}
+
+
+@pytest.mark.parametrize('tvalue', (True, False))
+def test_conditional_optional_remove_default(tvalue):
+    ret = remove_defaults({'t': tvalue, 'v': tvalue}, conditional_optional)
+    assert ret == {'t': tvalue}
+    ret = remove_defaults({'t': tvalue, 'v': not tvalue}, conditional_optional)
+    assert ret == {'t': tvalue, 'v': not tvalue}

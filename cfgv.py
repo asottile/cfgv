@@ -106,23 +106,38 @@ def _remove_default_optional_recurse(self, dct):
         _remove_default_optional(self, dct)
 
 
-def _check_conditional(self, dct):
+def _get_check_conditional(inner):
+    def _check_conditional(self, dct):
+        if dct.get(self.condition_key, MISSING) == self.condition_value:
+            inner(self, dct)
+        elif (
+                self.condition_key in dct and
+                self.ensure_absent and self.key in dct
+        ):
+            if hasattr(self.condition_value, 'describe_opposite'):
+                explanation = self.condition_value.describe_opposite()
+            else:
+                explanation = 'is not {!r}'.format(self.condition_value)
+            raise ValidationError(
+                'Expected {key} to be absent when {cond_key} {explanation}, '
+                'found {key}: {val!r}'.format(
+                    key=self.key,
+                    val=dct[self.key],
+                    cond_key=self.condition_key,
+                    explanation=explanation,
+                ),
+            )
+    return _check_conditional
+
+
+def _apply_default_conditional_optional(self, dct):
     if dct.get(self.condition_key, MISSING) == self.condition_value:
-        _check_required(self, dct)
-    elif self.condition_key in dct and self.ensure_absent and self.key in dct:
-        if hasattr(self.condition_value, 'describe_opposite'):
-            explanation = self.condition_value.describe_opposite()
-        else:
-            explanation = 'is not {!r}'.format(self.condition_value)
-        raise ValidationError(
-            'Expected {key} to be absent when {cond_key} {explanation}, '
-            'found {key}: {val!r}'.format(
-                key=self.key,
-                val=dct[self.key],
-                cond_key=self.condition_key,
-                explanation=explanation,
-            ),
-        )
+        _apply_default_optional(self, dct)
+
+
+def _remove_default_conditional_optional(self, dct):
+    if dct.get(self.condition_key, MISSING) == self.condition_value:
+        _remove_default_optional(self, dct)
 
 
 def _apply_default_conditional_recurse(self, dct):
@@ -166,15 +181,26 @@ Conditional = collections.namedtuple(
     ('key', 'check_fn', 'condition_key', 'condition_value', 'ensure_absent'),
 )
 Conditional.__new__.__defaults__ = (False,)
-Conditional.check = _check_conditional
+Conditional.check = _get_check_conditional(_check_required)
 Conditional.apply_default = _dct_noop
 Conditional.remove_default = _dct_noop
+ConditionalOptional = collections.namedtuple(
+    'ConditionalOptional',
+    (
+        'key', 'check_fn', 'default', 'condition_key', 'condition_value',
+        'ensure_absent',
+    ),
+)
+ConditionalOptional.__new__.__defaults__ = (False,)
+ConditionalOptional.check = _get_check_conditional(_check_optional)
+ConditionalOptional.apply_default = _apply_default_conditional_optional
+ConditionalOptional.remove_default = _remove_default_conditional_optional
 ConditionalRecurse = collections.namedtuple(
     'ConditionalRecurse',
     ('key', 'schema', 'condition_key', 'condition_value', 'ensure_absent'),
 )
 ConditionalRecurse.__new__.__defaults__ = (False,)
-ConditionalRecurse.check = _check_conditional
+ConditionalRecurse.check = _get_check_conditional(_check_required)
 ConditionalRecurse.check_fn = _check_fn_recurse
 ConditionalRecurse.apply_default = _apply_default_conditional_recurse
 ConditionalRecurse.remove_default = _remove_default_conditional_recurse
