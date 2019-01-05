@@ -191,6 +191,10 @@ Similar to ``Conditional`` and ``Optional``.
 
 Similar to `Conditional`, but uses a [schema](#making-a-schema).
 
+### `NoAdditionalKeys(keys)`
+
+Use in a mapping to ensure that only the `keys` specified are present.
+
 ## Equality helpers
 
 Equality helpers at the very least implement `__eq__` for their behaviour.
