@@ -22,6 +22,7 @@ from cfgv import In
 from cfgv import load_from_filename
 from cfgv import Map
 from cfgv import MISSING
+from cfgv import NoAdditionalKeys
 from cfgv import Not
 from cfgv import NotIn
 from cfgv import Optional
@@ -635,3 +636,22 @@ def test_conditional_optional_remove_default(tvalue):
     assert ret == {'t': tvalue}
     ret = remove_defaults({'t': tvalue, 'v': not tvalue}, conditional_optional)
     assert ret == {'t': tvalue, 'v': not tvalue}
+
+
+no_additional_keys = Map(
+    'Map', None,
+    Required(True, check_bool),
+    NoAdditionalKeys((True,)),
+)
+
+
+def test_no_additional_keys():
+    with pytest.raises(ValidationError) as excinfo:
+        validate({True: True, False: False}, no_additional_keys)
+    expected = (
+        'At Map()',
+        'Additional keys found: False.  Only these keys are allowed: True',
+    )
+    _assert_exception_trace(excinfo.value, expected)
+
+    validate({True: True}, no_additional_keys)

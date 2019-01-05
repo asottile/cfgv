@@ -150,6 +150,18 @@ def _remove_default_conditional_recurse(self, dct):
         _remove_default_required_recurse(self, dct)
 
 
+def _no_additional_keys_check(self, dct):
+    extra = sorted(set(dct) - set(self.keys))
+    if extra:
+        raise ValidationError(
+            'Additional keys found: {}.  '
+            'Only these keys are allowed: {}'.format(
+                ', '.join(str(x) for x in extra),
+                ', '.join(str(x) for x in self.keys),
+            ),
+        )
+
+
 Required = collections.namedtuple('Required', ('key', 'check_fn'))
 Required.check = _check_required
 Required.apply_default = _dct_noop
@@ -204,6 +216,10 @@ ConditionalRecurse.check = _get_check_conditional(_check_required)
 ConditionalRecurse.check_fn = _check_fn_recurse
 ConditionalRecurse.apply_default = _apply_default_conditional_recurse
 ConditionalRecurse.remove_default = _remove_default_conditional_recurse
+NoAdditionalKeys = collections.namedtuple('NoAdditionalKeys', ('keys',))
+NoAdditionalKeys.check = _no_additional_keys_check
+NoAdditionalKeys.apply_default = _dct_noop
+NoAdditionalKeys.remove_default = _dct_noop
 
 
 class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):
