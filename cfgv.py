@@ -230,9 +230,11 @@ class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):
 
     def check(self, v):
         if not isinstance(v, dict):
-            raise ValidationError('Expected a {} map but got a {}'.format(
-                self.object_name, type(v).__name__,
-            ))
+            raise ValidationError(
+                'Expected a {} map but got a {}'.format(
+                    self.object_name, type(v).__name__,
+                ),
+            )
         if self.id_key is None:
             context = 'At {}()'.format(self.object_name)
         else:
@@ -339,9 +341,11 @@ check_text = check_type(six.text_type, typename='text')
 def check_one_of(possible):
     def check_one_of_fn(v):
         if v not in possible:
-            raise ValidationError('Expected one of {} but got: {!r}'.format(
-                ', '.join(str(x) for x in sorted(possible)), v,
-            ))
+            raise ValidationError(
+                'Expected one of {} but got: {!r}'.format(
+                    ', '.join(str(x) for x in sorted(possible)), v,
+                ),
+            )
     return check_one_of_fn
 
 
