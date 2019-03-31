@@ -162,6 +162,12 @@ def _no_additional_keys_check(self, dct):
         )
 
 
+def _warn_additional_keys_check(self, dct):
+    extra = sorted(set(dct) - set(self.keys))
+    if extra:
+        self.callback(extra, self.keys)
+
+
 Required = collections.namedtuple('Required', ('key', 'check_fn'))
 Required.check = _check_required
 Required.apply_default = _dct_noop
@@ -220,6 +226,13 @@ NoAdditionalKeys = collections.namedtuple('NoAdditionalKeys', ('keys',))
 NoAdditionalKeys.check = _no_additional_keys_check
 NoAdditionalKeys.apply_default = _dct_noop
 NoAdditionalKeys.remove_default = _dct_noop
+WarnAdditionalKeys = collections.namedtuple(
+    'WarnAdditionalKeys',
+    ('keys', 'callback'),
+)
+WarnAdditionalKeys.check = _warn_additional_keys_check
+WarnAdditionalKeys.apply_default = _dct_noop
+WarnAdditionalKeys.remove_default = _dct_noop
 
 
 class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):

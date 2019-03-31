@@ -33,6 +33,7 @@ from cfgv import Required
 from cfgv import RequiredRecurse
 from cfgv import validate
 from cfgv import ValidationError
+from cfgv import WarnAdditionalKeys
 
 
 def _assert_exception_trace(e, trace):
@@ -655,3 +656,22 @@ def test_no_additional_keys():
     _assert_exception_trace(excinfo.value, expected)
 
     validate({True: True}, no_additional_keys)
+
+
+warn_additional_keys = Map(
+    'Map', None,
+    Required(True, check_bool),
+    WarnAdditionalKeys((True,), mock.Mock()),
+)
+
+
+def test_warn_additional_keys_when_has_extra_keys():
+    with mock.patch('cfgv.WarnAdditionalKeys.callback') as mocked_callback:
+        validate({True: True, False: False}, warn_additional_keys)
+    assert mocked_callback.called
+
+
+def test_warn_additional_keys_when_no_extra_keys():
+    with mock.patch('cfgv.WarnAdditionalKeys.callback') as mocked_callback:
+        validate({True: True}, warn_additional_keys)
+    assert not mocked_callback.called
