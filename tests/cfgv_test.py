@@ -658,20 +658,26 @@ def test_no_additional_keys():
     validate({True: True}, no_additional_keys)
 
 
-warn_additional_keys = Map(
-    'Map', None,
-    Required(True, check_bool),
-    WarnAdditionalKeys((True,), mock.Mock()),
-)
+@pytest.fixture
+def warn_additional_keys():
+    ret = mock.Mock()
+
+    def callback(extra, keys, dct):
+        return ret.record(extra, keys, dct)
+
+    ret.schema = Map(
+        'Map', None,
+        Required(True, check_bool),
+        WarnAdditionalKeys((True,), callback),
+    )
+    yield ret
 
 
-def test_warn_additional_keys_when_has_extra_keys():
-    with mock.patch('cfgv.WarnAdditionalKeys.callback') as mocked_callback:
-        validate({True: True, False: False}, warn_additional_keys)
-    assert mocked_callback.called
+def test_warn_additional_keys_when_has_extra_keys(warn_additional_keys):
+    validate({True: True, False: False}, warn_additional_keys.schema)
+    assert warn_additional_keys.record.called
 
 
-def test_warn_additional_keys_when_no_extra_keys():
-    with mock.patch('cfgv.WarnAdditionalKeys.callback') as mocked_callback:
-        validate({True: True}, warn_additional_keys)
-    assert not mocked_callback.called
+def test_warn_additional_keys_when_no_extra_keys(warn_additional_keys):
+    validate({True: True}, warn_additional_keys.schema)
+    assert not warn_additional_keys.record.called

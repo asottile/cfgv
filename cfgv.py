@@ -165,7 +165,7 @@ def _no_additional_keys_check(self, dct):
 def _warn_additional_keys_check(self, dct):
     extra = sorted(set(dct) - set(self.keys))
     if extra:
-        self.callback(extra, self.keys)
+        self.callback(extra, self.keys, dct)
 
 
 Required = collections.namedtuple('Required', ('key', 'check_fn'))
@@ -227,8 +227,7 @@ NoAdditionalKeys.check = _no_additional_keys_check
 NoAdditionalKeys.apply_default = _dct_noop
 NoAdditionalKeys.remove_default = _dct_noop
 WarnAdditionalKeys = collections.namedtuple(
-    'WarnAdditionalKeys',
-    ('keys', 'callback'),
+    'WarnAdditionalKeys', ('keys', 'callback'),
 )
 WarnAdditionalKeys.check = _warn_additional_keys_check
 WarnAdditionalKeys.apply_default = _dct_noop
