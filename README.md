@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/asottile/cfgv.svg?branch=master)](https://travis-ci.org/asottile/cfgv)
-[![Coverage Status](https://coveralls.io/repos/github/asottile/cfgv/badge.svg?branch=master)](https://coveralls.io/github/asottile/cfgv?branch=master)
+[![Build Status](https://dev.azure.com/asottile/asottile/_apis/build/status/asottile.cfgv?branchName=master)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=24&branchName=master)
+[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/24/master.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=24&branchName=master)
 
 cfgv
 ====
