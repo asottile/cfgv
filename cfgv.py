@@ -411,7 +411,7 @@ def load_from_filename(
         if not os.path.exists(filename):
             raise ValidationError('{} does not exist'.format(filename))
 
-        with io.open(filename) as f:
+        with io.open(filename, encoding='utf-8') as f:
             contents = f.read()
 
         with validate_context('File {}'.format(filename)):
