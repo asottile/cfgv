@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
+from unittest import mock
 
-import mock
 import pytest
 
 from cfgv import apply_defaults
@@ -79,7 +76,7 @@ def test_check_one_of_ok():
 
 def test_check_regex():
     with pytest.raises(ValidationError) as excinfo:
-        check_regex(str('('))
+        check_regex('(')
     assert excinfo.value.error_msg == "'(' is not a valid python regex"
 
 
@@ -106,13 +103,13 @@ def test_check_and():
         check(True)
     assert excinfo.value.error_msg == 'Expected str got bool'
     with pytest.raises(ValidationError) as excinfo:
-        check(str('('))
+        check('(')
     assert excinfo.value.error_msg == "'(' is not a valid python regex"
 
 
 def test_check_and_ok():
     check = check_and(check_type(str), check_regex)
-    check(str('^$'))
+    check('^$')
 
 
 @pytest.mark.parametrize(
@@ -541,7 +538,7 @@ def test_load_from_filename_fails_load_strategy(tmpdir):
     with pytest.raises(Error) as excinfo:
         load_from_filename(f.strpath, map_required, json.loads, Error)
     # ANY is json's error message
-    expected = ('File {}'.format(f.strpath), mock.ANY)
+    expected = (f'File {f.strpath}', mock.ANY)
     _assert_exception_trace(excinfo.value.args[0], expected)
 
 
@@ -551,7 +548,7 @@ def test_load_from_filename_validation_error(tmpdir):
     with pytest.raises(Error) as excinfo:
         load_from_filename(f.strpath, map_required, json.loads, Error)
     expected = (
-        'File {}'.format(f.strpath),
+        f'File {f.strpath}',
         'At foo(key=MISSING)',
         'Missing required key: key',
     )

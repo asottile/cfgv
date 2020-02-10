@@ -1,19 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import collections
 import contextlib
-import io
 import os.path
 import re
 import sys
 
-import six
-
 
 class ValidationError(ValueError):
     def __init__(self, error_msg, ctx=None):
-        super(ValidationError, self).__init__(error_msg)
+        super().__init__(error_msg)
         self.error_msg = error_msg
         self.ctx = ctx
 
@@ -21,9 +15,9 @@ class ValidationError(ValueError):
         out = '\n'
         err = self
         while err.ctx is not None:
-            out += '==> {}\n'.format(err.ctx)
+            out += f'==> {err.ctx}\n'
             err = err.error_msg
-        out += '=====> {}'.format(err.error_msg)
+        out += f'=====> {err.error_msg}'
         return out
 
 
@@ -37,7 +31,7 @@ def validate_context(msg):
         yield
     except ValidationError as e:
         _, _, tb = sys.exc_info()
-        six.reraise(ValidationError, ValidationError(e, ctx=msg), tb)
+        raise ValidationError(e, ctx=msg).with_traceback(tb)
 
 
 @contextlib.contextmanager
@@ -46,7 +40,7 @@ def reraise_as(tp):
         yield
     except ValidationError as e:
         _, _, tb = sys.exc_info()
-        six.reraise(tp, tp(e), tb)
+        raise tp(e).with_traceback(tb)
 
 
 def _dct_noop(self, dct):
@@ -56,7 +50,7 @@ def _dct_noop(self, dct):
 def _check_optional(self, dct):
     if self.key not in dct:
         return
-    with validate_context('At key: {}'.format(self.key)):
+    with validate_context(f'At key: {self.key}'):
         self.check_fn(dct[self.key])
 
 
@@ -71,7 +65,7 @@ def _remove_default_optional(self, dct):
 
 def _require_key(self, dct):
     if self.key not in dct:
-        raise ValidationError('Missing required key: {}'.format(self.key))
+        raise ValidationError(f'Missing required key: {self.key}')
 
 
 def _check_required(self, dct):
@@ -117,15 +111,10 @@ def _get_check_conditional(inner):
             if hasattr(self.condition_value, 'describe_opposite'):
                 explanation = self.condition_value.describe_opposite()
             else:
-                explanation = 'is not {!r}'.format(self.condition_value)
+                explanation = f'is not {self.condition_value!r}'
             raise ValidationError(
-                'Expected {key} to be absent when {cond_key} {explanation}, '
-                'found {key}: {val!r}'.format(
-                    key=self.key,
-                    val=dct[self.key],
-                    cond_key=self.condition_key,
-                    explanation=explanation,
-                ),
+                f'Expected {self.key} to be absent when {self.condition_key} '
+                f'{explanation}, found {self.key}: {dct[self.key]!r}',
             )
     return _check_conditional
 
@@ -153,12 +142,11 @@ def _remove_default_conditional_recurse(self, dct):
 def _no_additional_keys_check(self, dct):
     extra = sorted(set(dct) - set(self.keys))
     if extra:
+        extra_s = ', '.join(str(x) for x in extra)
+        keys_s = ', '.join(str(x) for x in self.keys)
         raise ValidationError(
-            'Additional keys found: {}.  '
-            'Only these keys are allowed: {}'.format(
-                ', '.join(str(x) for x in extra),
-                ', '.join(str(x) for x in self.keys),
-            ),
+            f'Additional keys found: {extra_s}.  '
+            f'Only these keys are allowed: {keys_s}',
         )
 
 
@@ -238,21 +226,19 @@ class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):
     __slots__ = ()
 
     def __new__(cls, object_name, id_key, *items):
-        return super(Map, cls).__new__(cls, object_name, id_key, items)
+        return super().__new__(cls, object_name, id_key, items)
 
     def check(self, v):
         if not isinstance(v, dict):
             raise ValidationError(
-                'Expected a {} map but got a {}'.format(
-                    self.object_name, type(v).__name__,
-                ),
+                f'Expected a {self.object_name} map but got a '
+                f'{type(v).__name__}',
             )
         if self.id_key is None:
-            context = 'At {}()'.format(self.object_name)
+            context = f'At {self.object_name}()'
         else:
-            context = 'At {}({}={!r})'.format(
-                self.object_name, self.id_key, v.get(self.id_key, MISSING),
-            )
+            key_v_s = v.get(self.id_key, MISSING)
+            context = f'At {self.object_name}({self.id_key}={key_v_s!r})'
         with validate_context(context):
             for item in self.items:
                 item.check(v)
@@ -274,13 +260,13 @@ class Array(collections.namedtuple('Array', ('of', 'allow_empty'))):
     __slots__ = ()
 
     def __new__(cls, of, allow_empty=True):
-        return super(Array, cls).__new__(cls, of=of, allow_empty=allow_empty)
+        return super().__new__(cls, of=of, allow_empty=allow_empty)
 
     def check(self, v):
         check_array(check_any)(v)
         if not self.allow_empty and not v:
             raise ValidationError(
-                "Expected at least 1 '{}'".format(self.of.object_name),
+                f"Expected at least 1 '{self.of.object_name}'",
             )
         for val in v:
             validate(val, self.of)
@@ -296,7 +282,7 @@ class Not(collections.namedtuple('Not', ('val',))):
     __slots__ = ()
 
     def describe_opposite(self):
-        return 'is {!r}'.format(self.val)
+        return f'is {self.val!r}'
 
     def __eq__(self, other):
         return other is not MISSING and other != self.val
@@ -306,10 +292,10 @@ class NotIn(collections.namedtuple('NotIn', ('values',))):
     __slots__ = ()
 
     def __new__(cls, *values):
-        return super(NotIn, cls).__new__(cls, values=values)
+        return super().__new__(cls, values=values)
 
     def describe_opposite(self):
-        return 'is any of {!r}'.format(self.values)
+        return f'is any of {self.values!r}'
 
     def __eq__(self, other):
         return other is not MISSING and other not in self.values
@@ -319,10 +305,10 @@ class In(collections.namedtuple('In', ('values',))):
     __slots__ = ()
 
     def __new__(cls, *values):
-        return super(In, cls).__new__(cls, values=values)
+        return super().__new__(cls, values=values)
 
     def describe_opposite(self):
-        return 'is not any of {!r}'.format(self.values)
+        return f'is not any of {self.values!r}'
 
     def __eq__(self, other):
         return other is not MISSING and other in self.values
@@ -335,28 +321,26 @@ def check_any(_):
 def check_type(tp, typename=None):
     def check_type_fn(v):
         if not isinstance(v, tp):
+            typename_s = typename or tp.__name__
             raise ValidationError(
-                'Expected {} got {}'.format(
-                    typename or tp.__name__, type(v).__name__,
-                ),
+                f'Expected {typename_s} got {type(v).__name__}',
             )
     return check_type_fn
 
 
 check_bool = check_type(bool)
-check_bytes = check_type(bytes, typename='bytes')
+check_bytes = check_type(bytes)
 check_int = check_type(int)
-check_string = check_type(six.string_types, typename='string')
-check_text = check_type(six.text_type, typename='text')
+check_string = check_type(str, typename='string')
+check_text = check_type(str, typename='text')
 
 
 def check_one_of(possible):
     def check_one_of_fn(v):
         if v not in possible:
+            possible_s = ', '.join(str(x) for x in sorted(possible))
             raise ValidationError(
-                'Expected one of {} but got: {!r}'.format(
-                    ', '.join(str(x) for x in sorted(possible)), v,
-                ),
+                f'Expected one of {possible_s} but got: {v!r}',
             )
     return check_one_of_fn
 
@@ -365,18 +349,18 @@ def check_regex(v):
     try:
         re.compile(v)
     except re.error:
-        raise ValidationError('{!r} is not a valid python regex'.format(v))
+        raise ValidationError(f'{v!r} is not a valid python regex')
 
 
 def check_array(inner_check):
     def check_array_fn(v):
         if not isinstance(v, (list, tuple)):
             raise ValidationError(
-                'Expected array but got {!r}'.format(type(v).__name__),
+                f'Expected array but got {type(v).__name__!r}',
             )
 
         for i, val in enumerate(v):
-            with validate_context('At index {}'.format(i)):
+            with validate_context(f'At index {i}'):
                 inner_check(val)
     return check_array_fn
 
@@ -409,12 +393,12 @@ def load_from_filename(
 ):
     with reraise_as(exc_tp):
         if not os.path.exists(filename):
-            raise ValidationError('{} does not exist'.format(filename))
+            raise ValidationError(f'{filename} does not exist')
 
-        with io.open(filename, encoding='utf-8') as f:
+        with open(filename, encoding='utf-8') as f:
             contents = f.read()
 
-        with validate_context('File {}'.format(filename)):
+        with validate_context(f'File {filename}'):
             try:
                 data = load_strategy(contents)
             except Exception as e:
