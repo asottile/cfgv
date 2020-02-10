@@ -1,4 +1,3 @@
 coverage
-mock
 pre-commit
 pytest
