@@ -532,6 +532,16 @@ def test_load_from_filename_file_does_not_exist():
     assert excinfo.value.args[0].error_msg == 'does_not_exist does not exist'
 
 
+def test_load_from_filename_unicode_error(tmp_path):
+    f = tmp_path.joinpath('f')
+    f.write_bytes(b'\x98\xae\xfe')
+
+    with pytest.raises(Error) as excinfo:
+        load_from_filename(f, map_required, json.loads, Error)
+    expected = (f'File {f}', mock.ANY)
+    _assert_exception_trace(excinfo.value.args[0], expected)
+
+
 def test_load_from_filename_fails_load_strategy(tmpdir):
     f = tmpdir.join('foo.notjson')
     f.write('totes not json')

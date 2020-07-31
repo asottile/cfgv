@@ -395,10 +395,13 @@ def load_from_filename(
         if not os.path.exists(filename):
             raise ValidationError(f'{filename} does not exist')
 
-        with open(filename, encoding='utf-8') as f:
-            contents = f.read()
-
         with validate_context(f'File {filename}'):
+            try:
+                with open(filename, encoding='utf-8') as f:
+                    contents = f.read()
+            except UnicodeDecodeError as e:
+                raise ValidationError(str(e))
+
             try:
                 data = load_strategy(contents)
             except Exception as e:
