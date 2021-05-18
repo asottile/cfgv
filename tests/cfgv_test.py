@@ -529,7 +529,15 @@ class Error(Exception):
 def test_load_from_filename_file_does_not_exist():
     with pytest.raises(Error) as excinfo:
         load_from_filename('does_not_exist', map_required, json.loads, Error)
-    assert excinfo.value.args[0].error_msg == 'does_not_exist does not exist'
+    assert excinfo.value.args[0].error_msg == 'does_not_exist is not a file'
+
+
+def test_load_from_filename_not_a_file(tmpdir):
+    with tmpdir.as_cwd():
+        tmpdir.join('f').ensure_dir()
+        with pytest.raises(Error) as excinfo:
+            load_from_filename('f', map_required, json.loads, Error)
+        assert excinfo.value.args[0].error_msg == 'f is not a file'
 
 
 def test_load_from_filename_unicode_error(tmp_path):
