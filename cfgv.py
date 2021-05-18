@@ -392,8 +392,8 @@ def load_from_filename(
         exc_tp=ValidationError,
 ):
     with reraise_as(exc_tp):
-        if not os.path.exists(filename):
-            raise ValidationError(f'{filename} does not exist')
+        if not os.path.isfile(filename):
+            raise ValidationError(f'{filename} is not a file')
 
         with validate_context(f'File {filename}'):
             try:
