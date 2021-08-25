@@ -31,7 +31,7 @@ def validate_context(msg):
         yield
     except ValidationError as e:
         _, _, tb = sys.exc_info()
-        raise ValidationError(e, ctx=msg).with_traceback(tb)
+        raise ValidationError(e, ctx=msg).with_traceback(tb) from None
 
 
 @contextlib.contextmanager
@@ -40,7 +40,7 @@ def reraise_as(tp):
         yield
     except ValidationError as e:
         _, _, tb = sys.exc_info()
-        raise tp(e).with_traceback(tb)
+        raise tp(e).with_traceback(tb) from None
 
 
 def _dct_noop(self, dct):
