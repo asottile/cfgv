@@ -9,7 +9,9 @@ Validate configuration and produce human readable error messages.
 
 ## Installation
 
-`pip install cfgv`
+```bash
+pip install cfgv
+```
 
 ## Sample error messages
 
