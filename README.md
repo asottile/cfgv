@@ -1,5 +1,4 @@
-[![Build Status](https://dev.azure.com/asottile/asottile/_apis/build/status/asottile.cfgv?branchName=main)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=24&branchName=main)
-[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/24/main.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=24&branchName=main)
+[![build status](https://github.com/asottile/cfgv/actions/workflows/main.yml/badge.svg)](https://github.com/asottile/cfgv/actions/workflows/main.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/cfgv/main.svg)](https://results.pre-commit.ci/latest/github/asottile/cfgv/main)
 
 cfgv
