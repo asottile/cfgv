@@ -392,12 +392,15 @@ def load_from_filename(
         schema,
         load_strategy,
         exc_tp=ValidationError,
+        *,
+        display_filename=None,
 ):
+    display_filename = display_filename or filename
     with reraise_as(exc_tp):
         if not os.path.isfile(filename):
-            raise ValidationError(f'{filename} is not a file')
+            raise ValidationError(f'{display_filename} is not a file')
 
-        with validate_context(f'File {filename}'):
+        with validate_context(f'File {display_filename}'):
             try:
                 with open(filename, encoding='utf-8') as f:
                     contents = f.read()

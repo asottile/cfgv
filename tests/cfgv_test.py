@@ -36,11 +36,12 @@ from cfgv import WarnAdditionalKeys
 
 
 def _assert_exception_trace(e, trace):
-    inner = e
-    for ctx in trace[:-1]:
-        assert inner.ctx == ctx
-        inner = inner.error_msg
-    assert inner.error_msg == trace[-1]
+    parts = []
+    while e.ctx is not None:
+        parts.append(e.ctx)
+        e = e.error_msg
+    parts.append(e.error_msg)
+    assert tuple(parts) == trace
 
 
 def test_ValidationError_simple_str():
@@ -580,6 +581,35 @@ def test_load_from_filename_applies_defaults(tmpdir):
     f.write('{}')
     ret = load_from_filename(f.strpath, map_optional, json.loads, Error)
     assert ret == {'key': False}
+
+
+def test_load_from_filename_custom_display_no_file(tmp_path):
+    with pytest.raises(ValidationError) as excinfo:
+        load_from_filename(
+            tmp_path.joinpath('cfg.json'),
+            map_required,
+            json.loads,
+            display_filename='cfg.json',
+        )
+    _assert_exception_trace(excinfo.value.args[0], ('cfg.json is not a file',))
+
+
+def test_load_from_filename_custom_display_error(tmp_path):
+    f = tmp_path.joinpath('cfg.json')
+    f.write_text('{}')
+    with pytest.raises(ValidationError) as excinfo:
+        load_from_filename(
+            f,
+            map_required,
+            json.loads,
+            display_filename='cfg.json',
+        )
+    expected = (
+        'File cfg.json',
+        'At foo(key=MISSING)',
+        'Missing required key: key',
+    )
+    _assert_exception_trace(excinfo.value.args[0], expected)
 
 
 conditional_recurse = Map(
