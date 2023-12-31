@@ -374,6 +374,16 @@ def check_and(*fns):
     return check
 
 
+def check_or(*fns):
+    def check(v):
+        for fn in fns:
+            with contextlib.suppress(ValidationError):
+                fn(v)
+                return
+        raise ValidationError(f'Value {v} did not match any of the checks')
+    return check
+
+
 def validate(v, schema):
     schema.check(v)
     return v

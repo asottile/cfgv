@@ -12,6 +12,7 @@ from cfgv import check_any
 from cfgv import check_array
 from cfgv import check_bool
 from cfgv import check_one_of
+from cfgv import check_or
 from cfgv import check_regex
 from cfgv import check_type
 from cfgv import Conditional
@@ -108,6 +109,16 @@ def test_check_and():
     with pytest.raises(ValidationError) as excinfo:
         check('(')
     assert excinfo.value.error_msg == "'(' is not a valid python regex"
+
+
+def test_check_or():
+    check = check_or(check_type(str), check_type(int))
+    check('test')
+    check(42)
+    with pytest.raises(ValidationError) as excinfo:
+        check(3.14)
+    expected = ('Value 3.14 did not match any of the checks')
+    assert excinfo.value.error_msg == expected
 
 
 def test_check_and_ok():

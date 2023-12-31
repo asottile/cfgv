@@ -282,3 +282,12 @@ For example:
 ```python
 Required('language', check_and(check_string, my_check_language))
 ```
+
+### `check_or(*fns)`
+
+Returns a function that requires one of the multiple checks to pass.
+
+For example:
+```python
+Required('language', check_and(check_string, check_int))
+```
