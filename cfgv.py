@@ -258,6 +258,40 @@ class Map(collections.namedtuple('Map', ('object_name', 'id_key', 'items'))):
         return ret
 
 
+class KeyValueMap(
+        collections.namedtuple(
+            'KeyValueMap',
+            ('object_name', 'check_key_fn', 'value_schema'),
+        ),
+):
+    __slots__ = ()
+
+    def check(self, v):
+        if not isinstance(v, dict):
+            raise ValidationError(
+                f'Expected a {self.object_name} map but got a '
+                f'{type(v).__name__}',
+            )
+        with validate_context(f'At {self.object_name}()'):
+            for k, val in v.items():
+                with validate_context(f'For key: {k}'):
+                    self.check_key_fn(k)
+                with validate_context(f'At key: {k}'):
+                    validate(val, self.value_schema)
+
+    def apply_defaults(self, v):
+        return {
+            k: apply_defaults(val, self.value_schema)
+            for k, val in v.items()
+        }
+
+    def remove_defaults(self, v):
+        return {
+            k: remove_defaults(val, self.value_schema)
+            for k, val in v.items()
+        }
+
+
 class Array(collections.namedtuple('Array', ('of', 'allow_empty'))):
     __slots__ = ()
 
