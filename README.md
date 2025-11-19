@@ -116,6 +116,15 @@ Used to nest maps inside of arrays.  For arrays of scalars, see `check_array`.
 
 When validated, this will check that each element adheres to the sub-schema.
 
+### `KeyValueMap(object_name, key_check_fn, value_schema)`
+
+Used to make a schema representing a homogenous mapping where the keys are
+of a specific type and the values match a schema
+
+- `object_name`: will be displayed in error messages
+- `key_check_fn`: a [check function](#check-functions) for the key
+- `value_schema`: a `Map` / `Array` or other sub-schema.
+
 ## Validator objects
 
 Validator objects are used to validate key-value-pairs of a `Map`.

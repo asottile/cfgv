@@ -11,13 +11,16 @@ from cfgv import check_and
 from cfgv import check_any
 from cfgv import check_array
 from cfgv import check_bool
+from cfgv import check_int
 from cfgv import check_one_of
 from cfgv import check_regex
+from cfgv import check_string
 from cfgv import check_type
 from cfgv import Conditional
 from cfgv import ConditionalOptional
 from cfgv import ConditionalRecurse
 from cfgv import In
+from cfgv import KeyValueMap
 from cfgv import load_from_filename
 from cfgv import Map
 from cfgv import MISSING
@@ -728,3 +731,79 @@ def test_warn_additional_keys_when_has_extra_keys(warn_additional_keys):
 def test_warn_additional_keys_when_no_extra_keys(warn_additional_keys):
     validate({True: True}, warn_additional_keys.schema)
     assert not warn_additional_keys.record.called
+
+
+key_value_map_schema = KeyValueMap(
+    'Container',
+    check_string,
+    Map(
+        'Object', 'name',
+        Required('name', check_string),
+        Optional('setting', check_bool, False),
+    ),
+)
+key_value_map_ints_schema = KeyValueMap(
+    'Container',
+    check_int,
+    Array(Map('Object', 'nane', Required('name', check_string))),
+)
+
+
+def test_key_value_map_schema_ok():
+    validate(
+        {'hello': {'name': 'hello'}, 'world': {'name': 'world'}},
+        key_value_map_schema,
+    )
+    validate(
+        {1: [{'name': 'hello'}], 2: [{'name': 'world'}]},
+        key_value_map_ints_schema,
+    )
+
+
+def test_key_value_map_apply_defaults():
+    orig = {'hello': {'name': 'hello'}}
+    ret = apply_defaults(orig, key_value_map_schema)
+    assert orig == {'hello': {'name': 'hello'}}
+    assert ret == {'hello': {'name': 'hello', 'setting': False}}
+
+
+def test_key_value_map_remove_defaults():
+    orig = {'hello': {'name': 'hello', 'setting': False}}
+    ret = remove_defaults(orig, key_value_map_schema)
+    assert orig == {'hello': {'name': 'hello', 'setting': False}}
+    assert ret == {'hello': {'name': 'hello'}}
+
+
+def test_key_value_map_not_a_map():
+    with pytest.raises(ValidationError) as excinfo:
+        validate([], key_value_map_schema)
+    expected = (
+        'Expected a Container map but got a list',
+    )
+    _assert_exception_trace(excinfo.value, expected)
+
+
+def test_key_value_map_wrong_key_type():
+    with pytest.raises(ValidationError) as excinfo:
+        val = {1: {'name': 'hello'}}
+        validate(val, key_value_map_schema)
+    expected = (
+        'At Container()',
+        'For key: 1',
+        'Expected string got int',
+    )
+    _assert_exception_trace(excinfo.value, expected)
+
+
+def test_key_value_map_error_in_child_schema():
+    with pytest.raises(ValidationError) as excinfo:
+        val = {'hello': {'name': 1}}
+        validate(val, key_value_map_schema)
+    expected = (
+        'At Container()',
+        'At key: hello',
+        'At Object(name=1)',
+        'At key: name',
+        'Expected string got int',
+    )
+    _assert_exception_trace(excinfo.value, expected)
