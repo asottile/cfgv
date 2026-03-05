@@ -225,12 +225,14 @@ map_conditional = Map(
     'foo', 'key',
     Conditional(
         'key2', check_bool, condition_key='key', condition_value=True,
+        ensure_absent=False,
     ),
 )
 map_conditional_not = Map(
     'foo', 'key',
     Conditional(
         'key2', check_bool, condition_key='key', condition_value=Not(False),
+        ensure_absent=False,
     ),
 )
 map_conditional_absent = Map(
@@ -337,7 +339,7 @@ def test_no_error_conditional_absent():
 
 
 def test_apply_defaults_copies_object():
-    val = {}
+    val: dict = {}
     ret = apply_defaults(val, map_optional)
     assert ret is not val
 
@@ -498,8 +500,8 @@ params2_schema = Map('Params2', None, Required('p2', check_bool))
 conditional_nested_schema = Map(
     'Config', None,
     Required('type', check_any),
-    ConditionalRecurse('params', params1_schema, 'type', 'type1'),
-    ConditionalRecurse('params', params2_schema, 'type', 'type2'),
+    ConditionalRecurse('params', params1_schema, 'type', 'type1', False),
+    ConditionalRecurse('params', params2_schema, 'type', 'type2', False),
 )
 
 
@@ -621,11 +623,11 @@ conditional_recurse = Map(
     Required('t', check_bool),
     ConditionalRecurse(
         'v', Map('Inner', 'k', Optional('k', check_bool, True)),
-        't', True,
+        't', True, False,
     ),
     ConditionalRecurse(
         'v', Map('Inner', 'k', Optional('k', check_bool, False)),
-        't', False,
+        't', False, False,
     ),
 )
 
@@ -656,8 +658,8 @@ conditional_optional = Map(
     'Map', None,
 
     Required('t', check_bool),
-    ConditionalOptional('v', check_bool, True, 't', True),
-    ConditionalOptional('v', check_bool, False, 't', False),
+    ConditionalOptional('v', check_bool, True, 't', True, False),
+    ConditionalOptional('v', check_bool, False, 't', False, False),
 )
 
 

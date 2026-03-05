@@ -24,7 +24,8 @@ class ValidationError(ValueError):
 
 
 MISSING = collections.namedtuple('Missing', ())()
-type(MISSING).__repr__ = lambda self: 'MISSING'
+# error: Cannot assign to a method
+type(MISSING).__repr__ = lambda self: 'MISSING'  # type: ignore[method-assign]
 
 
 @contextlib.contextmanager
@@ -75,7 +76,8 @@ def _check_required(self, dct):
     _check_optional(self, dct)
 
 
-@property
+# error: "property" used with a non-method
+@property  # type: ignore[misc]
 def _check_fn_recurse(self):
     def check_fn(val):
         validate(val, self.schema)
