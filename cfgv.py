@@ -32,8 +32,8 @@ def validate_context(msg):
     try:
         yield
     except ValidationError as e:
-        _, _, tb = sys.exc_info()
-        raise ValidationError(e, ctx=msg).with_traceback(tb) from None
+        new = ValidationError(e, ctx=msg)
+        raise new.with_traceback(e.__traceback__) from None
 
 
 @contextlib.contextmanager
